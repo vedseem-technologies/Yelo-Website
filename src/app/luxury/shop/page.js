@@ -67,7 +67,6 @@ export default function LuxuryShopPage() {
 
         if (response && response.success) {
           const rawProducts = response.products || response.data || []
-          console.log(`📦 Luxury shop page: Received ${rawProducts.length} products from API (page ${pageNum})`, rawProducts.length > 0 ? `First product: ${rawProducts[0]?.name}` : 'No products')
           
           if (reset && rawProducts.length === 0) {
             console.warn('⚠️ No products returned from luxury-shop API on first page load')

@@ -46,16 +46,12 @@ const ProductCard = ({
 
   const productImages = product.images && product.images.length > 0
     ? product.images.map((img, index) => {
-      console.log(`[ProductCard] Processing image ${index}:`, img);
       const url = getImageUrl(img);
-      console.log(`[ProductCard] Extracted URL:`, url);
       const finalImage = url || product.emoji || '🛍️';
-      console.log(`[ProductCard] Final image:`, finalImage);
       return finalImage;
     })
     : [product.emoji || '🛍️']
 
-  console.log(`[ProductCard] Product: ${product.name}, Images:`, productImages);
 
   const handleWishlist = (e) => {
     e.preventDefault()
@@ -303,7 +299,6 @@ const ProductCard = ({
             })}
           </div>
 
-          {/* Tag Badge - Softer Accent, Rounded Pill */}
           {tag && (
             <div className={`absolute top-2 left-2 z-20 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm ${tag === 'Trending'
                 ? 'bg-yellow-100 text-yellow-700'
@@ -315,7 +310,6 @@ const ProductCard = ({
             </div>
           )}
 
-          {/* Rating Badge */}
           {product.rating && (
             <div className={`absolute bottom-2 left-2 backdrop-blur-sm text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-1 z-20 ${theme === 'dark'
                 ? 'bg-yellow-500/20 border border-yellow-500/30'
@@ -329,7 +323,6 @@ const ProductCard = ({
             </div>
           )}
 
-          {/* Navigation Arrows (Desktop) */}
           {productImages.length > 1 && (
             <>
               <button

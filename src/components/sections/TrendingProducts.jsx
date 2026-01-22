@@ -17,9 +17,9 @@ function TrendingProducts() {
     const fetchTrendingProducts = async () => {
       try {
         setIsLoading(true)
-        const response = await productAPI.getTrending(24) // Fetch 24 trending products
+        const response = await productAPI.getTrending(24) 
         if (response && response.success && response.data) {
-          // Sort by newest first (backend already sorts, but ensure it's correct)
+          // Sort by newest first 
           const sorted = response.data.sort((a, b) => {
             const dateA = new Date(a.dateAdded || a.createdAt || 0)
             const dateB = new Date(b.dateAdded || b.createdAt || 0)
@@ -27,7 +27,6 @@ function TrendingProducts() {
           })
           const products = sorted.slice(0, 24)
           setTrendingProducts(products)
-          // Save section data to localStorage
           saveSectionData('trending', products)
         } else {
           setTrendingProducts([])

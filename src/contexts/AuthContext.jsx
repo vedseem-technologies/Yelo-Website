@@ -140,7 +140,6 @@ export const AuthProvider = ({ children }) => {
     // Create new verifier for each OTP request
     // Use "invisible" size - Firebase will show visible challenge if needed
     try {
-      console.log("Creating RecaptchaVerifier...");
       
       const verifier = new RecaptchaVerifier(
         auth,
@@ -151,7 +150,6 @@ export const AuthProvider = ({ children }) => {
             console.log("✅ reCAPTCHA verified successfully");
           },
           "expired-callback": () => {
-            console.log("⚠️ reCAPTCHA expired");
             if (verifierRef.current) {
               try {
                 verifierRef.current.clear();
@@ -165,9 +163,7 @@ export const AuthProvider = ({ children }) => {
       );
 
       verifierRef.current = verifier;
-      console.log("RecaptchaVerifier created");
 
-      // Wait for reCAPTCHA widget to render (with timeout)
       let attempts = 0;
       const maxAttempts = 50; // 5 seconds max
       let widgetRendered = false;
@@ -175,7 +171,6 @@ export const AuthProvider = ({ children }) => {
       while (attempts < maxAttempts) {
         const iframe = container.querySelector("iframe");
         if (iframe && iframe.offsetWidth > 0 && iframe.offsetHeight > 0) {
-          console.log("✅ reCAPTCHA widget rendered");
           widgetRendered = true;
           break;
         }
@@ -190,7 +185,6 @@ export const AuthProvider = ({ children }) => {
       // Additional wait to ensure reCAPTCHA is fully ready
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      console.log("Attempting to send OTP to:", phoneNumber);
       
       // Add timeout to prevent infinite waiting
       const timeoutPromise = new Promise((_, reject) => {
@@ -204,7 +198,6 @@ export const AuthProvider = ({ children }) => {
         timeoutPromise
       ]);
       
-      console.log("✅ OTP sent successfully");
       
       // Hide container after successful OTP send
       container.style.display = "none";
@@ -212,7 +205,7 @@ export const AuthProvider = ({ children }) => {
       
       return result;
     } catch (error) {
-      console.error("❌ OTP send error:", error);
+      console.error(" OTP send error:", error);
       console.error("Error code:", error.code);
       console.error("Error message:", error.message);
       
@@ -739,7 +732,7 @@ Please verify:
 //     >
 //       {children}
 
-//       {/* 🔥 MUST ALWAYS EXIST - Container for invisible reCAPTCHA */}
+//       {/*  MUST ALWAYS EXIST - Container for invisible reCAPTCHA */}
 //       {/* Container must be visible (but hidden) for reCAPTCHA script to load */}
 //       <div
 //         id="recaptcha-container"
