@@ -26,7 +26,7 @@ const nextConfig = {
                 https://securetoken.googleapis.com
                 https://apis.google.com
                 https://yeah-lo-fe541.firebaseapp.com
-                https://yelo-backend.onrender.com
+                https://yelo-backend-r5pu.onrender.com
                 https://api.razorpay.com
                 https://lumberjack.razorpay.com
                 https://*.razorpay.com;
@@ -47,7 +47,8 @@ const nextConfig = {
                 https://lh3.googleusercontent.com
                 https://flagcdn.com
                 https://i.pinimg.com
-                https://images.unsplash.com;
+                https://images.unsplash.com
+                https://res.cloudinary.com;
             `.replace(/\s{2,}/g, " ").trim(),
           },
         ],

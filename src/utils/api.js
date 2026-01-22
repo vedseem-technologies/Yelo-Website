@@ -1,3 +1,4 @@
+// Yelo-Website/src/utils/api.js
 /**
  * API utility functions for frontend
  */
@@ -10,7 +11,7 @@ const apiUrl = getApiUrl();
  */
 async function apiFetch(endpoint, options = {}) {
   const url = `${apiUrl}${endpoint}`;
-  
+
   const config = {
     ...options,
     headers: {
@@ -29,7 +30,7 @@ async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, config);
-    
+
     // Check if response has content before parsing JSON
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
@@ -139,7 +140,7 @@ export const productAPI = {
 
   // Get products by category/subcategory (paginated)
   getByCategory: async (categorySlug, subcategorySlug = null, params = {}) => {
-    const queryParams = { 
+    const queryParams = {
       page: params.page || 1,
       limit: params.limit || 6,
       sort: params.sort || 'popular',
@@ -148,14 +149,14 @@ export const productAPI = {
       ...(params.minPrice && params.minPrice !== 'undefined' && { minPrice: params.minPrice }),
       ...(params.maxPrice && params.maxPrice !== 'undefined' && { maxPrice: params.maxPrice })
     };
-    
+
     // Remove undefined values
     Object.keys(queryParams).forEach(key => {
       if (queryParams[key] === undefined || queryParams[key] === 'undefined' || queryParams[key] === '') {
         delete queryParams[key];
       }
     });
-    
+
     const queryString = new URLSearchParams(queryParams).toString();
     return apiFetch(`/products/category${queryString ? `?${queryString}` : ""}`);
   },

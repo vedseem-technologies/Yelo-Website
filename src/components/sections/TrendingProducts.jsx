@@ -43,7 +43,7 @@ function TrendingProducts() {
   }, [])
 
   return (
-    <div 
+    <div
       id="trending"
       ref={sectionRef}
       className={`w-full bg-white py-12 md:py-16 scroll-reveal-right ${isRevealed ? 'revealed' : ''}`}
