@@ -13,7 +13,6 @@ const LuxuryShopProductCard = ({ product }) => {
     setIsWishlisted(isInWishlist(product.id))
   }, [product.id, isInWishlist])
 
-  // Helper to extract image URL (handles both string and object formats)
   const getImageUrl = (image) => {
     if (!image) return null
     if (typeof image === 'string') return image

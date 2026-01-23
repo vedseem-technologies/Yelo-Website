@@ -1,11 +1,8 @@
-// Category slug to name mapping
 export const categoryNames = {
   fashion: "Women's Wear",
 }
 
-// Mock product data
 const allProducts = [
-  // Fashion products
   {
     id: 1,
     slug: 'calvin-clein-regular-fit-slim-fit-shirt',
@@ -571,23 +568,19 @@ const allProducts = [
 ]
 
 export function getCategoryName(slug) {
-  // Return the category name from mapping, or format the slug as fallback
   if (!slug || slug === 'undefined' || slug === '') {
     return 'Category'
   }
   if (categoryNames[slug]) {
     return categoryNames[slug]
   }
-  // Fallback: capitalize first letter and replace hyphens with spaces
   return slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ')
 }
 
 export function getCategoryProducts(slug) {
-  // Return products for the category, or empty array if category doesn't exist
   if (!slug || slug === 'undefined' || slug === '') {
     return []
   }
-  // Return filtered products for all categories
   return allProducts.filter((product) => product.category === slug)
 }
 
@@ -600,6 +593,5 @@ export function getAllBrands() {
   return brands.sort()
 }
 
-// Export all products for use in affordable/luxury pages
 export { allProducts }
 

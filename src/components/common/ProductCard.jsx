@@ -8,18 +8,17 @@ import { useWishlist } from '@/contexts/WishlistContext'
 
 const ProductCard = ({ 
   product, 
-  tag = null, // 'NEW DROP', 'Trending', 'Fresh Arrival', etc.
+  tag = null, 
   showAddToBag = true,
-  onRemove = null, // For wishlist/cart
-  variant = 'default', // 'default', 'wishlist', 'cart'
-  theme = 'light', // 'light', 'dark' (for luxury page)
-  compact = false // For mobile grid layout
+  onRemove = null, 
+  variant = 'default', 
+  theme = 'light', 
+  compact = false 
 }) => {
   const { addToCart } = useCart()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const [isWishlisted, setIsWishlisted] = useState(false)
 
-  // Check if product is in wishlist on mount
   useEffect(() => {
     setIsWishlisted(isInWishlist(product.id))
   }, [product.id, isInWishlist])

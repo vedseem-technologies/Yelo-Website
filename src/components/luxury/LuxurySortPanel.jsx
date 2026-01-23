@@ -16,7 +16,6 @@ const LuxurySortPanel = ({ isOpen, onClose, selectedSort, onSelect }) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -26,7 +25,6 @@ const LuxurySortPanel = ({ isOpen, onClose, selectedSort, onSelect }) => {
             onClick={onClose}
           />
 
-          {/* Sort Panel */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -35,7 +33,6 @@ const LuxurySortPanel = ({ isOpen, onClose, selectedSort, onSelect }) => {
             className="fixed bottom-0 left-0 right-0 bg-white z-[70] rounded-t-3xl shadow-xl max-h-[80vh] overflow-y-auto"
           >
             <div className="p-6">
-              {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <ArrowUpDown className="w-5 h-5 text-gray-700" />
@@ -49,7 +46,6 @@ const LuxurySortPanel = ({ isOpen, onClose, selectedSort, onSelect }) => {
                 </button>
               </div>
 
-              {/* Sort Options */}
               <div className="space-y-2">
                 {luxurySortOptions.map((option) => (
                   <button
