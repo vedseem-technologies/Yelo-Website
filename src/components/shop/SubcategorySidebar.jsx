@@ -10,7 +10,7 @@ function SubcategorySidebar({
   onSubcategorySelect, 
   type = 'brand', 
   theme = 'light',
-  backendSubcategories = null // Optional: subcategories from backend
+  backendSubcategories = null 
 }) {
   const [subcategories, setSubcategories] = useState([])
   const [loading, setLoading] = useState(false)
@@ -19,7 +19,6 @@ function SubcategorySidebar({
   const { categories } = useCategories()
 
   useEffect(() => {
-    // If backend subcategories are provided, use them
     if (backendSubcategories && Array.isArray(backendSubcategories) && backendSubcategories.length > 0) {
       const subcategoryList = backendSubcategories.map(sub => ({
         key: sub.slug || sub.name,
@@ -28,7 +27,7 @@ function SubcategorySidebar({
         count: sub.productCount || 0
       }))
       
-      // Add "All" option at the beginning
+
       const totalCount = products?.length || 0
       subcategoryList.unshift({
         key: 'all',
@@ -41,35 +40,26 @@ function SubcategorySidebar({
       return
     }
 
-    // If type is 'category', fetch categories from backend
     if (type === 'category') {
-      // Helper function to process categories data
       const processCategoriesData = (categoriesData) => {
         if (categoriesData && categoriesData.length > 0) {
-          // First, filter out "Men's Wear" categories with images (keep only icon version)
           const filteredCategories = categoriesData.filter(cat => {
-            // Remove "Men's Wear" category if it has an image (keep only the one with icon)
             if (cat.slug === 'mens-wear' && cat.image) {
               return false
             }
             return true
           })
           
-          // Deduplicate by slug AND by name (to catch any variations)
           const uniqueCategories = filteredCategories.reduce((acc, cat) => {
-            // Check if we already have a category with the same slug
             const existingBySlug = acc.find(c => c.slug === cat.slug)
             if (existingBySlug) {
-              return acc // Skip duplicate by slug
+              return acc
             }
             
-            // Check if we already have a category with the same name (case-insensitive)
             const existingByName = acc.find(c => 
               c.name?.toLowerCase() === cat.name?.toLowerCase()
             )
             if (existingByName) {
-              // If existing has no image and new one has image, replace it
-              // Otherwise, keep the existing one (prefer icon version)
               if (!existingByName.image && cat.image) {
                 const index = acc.indexOf(existingByName)
                 acc[index] = cat
@@ -81,14 +71,11 @@ function SubcategorySidebar({
             return acc
           }, [])
 
-          // Map to sidebar format - only include categories with at least 1 product IN THIS SHOP
-          // When used in a shop context, only show categories that have products in the current shop's products array
-          // Pre-process products for faster lookup
+       
           const productsArray = products || []
           const categoryList = uniqueCategories
             .map(cat => {
-              // Count products in THIS shop that belong to this category
-              // Optimized: use early returns and cached lookups
+            
               const catSlugLower = cat.slug?.toLowerCase()
               const catNameLower = cat.name?.toLowerCase()
               let localProductCount = 0
@@ -96,13 +83,12 @@ function SubcategorySidebar({
               for (const p of productsArray) {
                 const productCategory = p.category?.toLowerCase()
                 
-                // Quick exact matches first
                 if (productCategory === catSlugLower || productCategory === catNameLower) {
                   localProductCount++
                   continue
                 }
                 
-                // Check subcategory match (only if product has subcategory)
+              
                 if (p.subcategory && cat.subcategories?.length > 0) {
                   const productSubcat = p.subcategory.toLowerCase()
                   if (cat.subcategories.some(sub => 
@@ -122,13 +108,13 @@ function SubcategorySidebar({
                 localCount: localProductCount
               }
             })
-            // STRICT FILTER: Only show categories that have products IN THIS SHOP
+         
             .filter(cat => {
               const localCount = Number(cat.localCount) || 0
               return localCount > 0
             })
 
-          // Add "All" option at the beginning
+         
           const totalCount = products?.length || 0
           categoryList.unshift({
             key: 'all',
@@ -142,17 +128,12 @@ function SubcategorySidebar({
         }
       }
       
-      // Use categories from context immediately if available (don't wait for API)
-      // Context already uses lightweight endpoint, so this is fast
       if (categories && categories.length > 0) {
-        // Process immediately with existing data - show sidebar right away
         processCategoriesData(categories)
         setLoading(false)
-        // No need to fetch again - context already has lightweight data
         return
       }
       
-      // If no context data, show "All" immediately and fetch lightweight in background
       setSubcategories([{
         key: 'all',
         name: 'All',
@@ -161,7 +142,6 @@ function SubcategorySidebar({
       }])
       setLoading(false)
       
-      // Fetch lightweight categories from API in background
       categoryAPI.getLightweight().then(response => {
         if (response && response.success && response.data) {
           processCategoriesData(response.data)
@@ -173,13 +153,11 @@ function SubcategorySidebar({
       return
     }
     
-    // Otherwise, extract subcategories from products (for brand, productType, etc.)
     let subcategoryMap = new Map()
     
     products.forEach(product => {
       let key, name, image
       
-      // Helper to extract image URL (handles both string and object formats)
       const getImageUrl = (img) => {
         if (!img) return null
         
@@ -193,21 +171,16 @@ function SubcategorySidebar({
           return null
         }
         
-        // Only return if it's a valid, complete URL
-        // Must be at least 10 characters and start with proper protocol or path
         if (url && url.length > 10 && (
           url.startsWith('http://') || 
           url.startsWith('https://') || 
           url.startsWith('/')
         )) {
-          // Additional validation: check it's not a partial URL
           if (url.startsWith('http://') || url.startsWith('https://')) {
-            // Must have domain, not just "http://" or partial
             if (url.includes('.') || url.length > 15) {
               return url
             }
           } else if (url.startsWith('/')) {
-            // Must be a proper path, not just "/"
             if (url.length > 2) {
               return url
             }
@@ -218,7 +191,6 @@ function SubcategorySidebar({
       }
       
       if (type === 'productType' || type === 'subcategory') {
-        // Use subcategory field first (new structure), then productType
         key = product.subcategory || product.productType || 'Unknown'
         name = product.subcategory || product.productType || 'Unknown'
         const firstImage = product.images?.[0]
@@ -227,7 +199,6 @@ function SubcategorySidebar({
       } else if (type === 'brand') {
         key = product.brand || 'Unknown'
         name = product.brand || 'Unknown'
-        // Get image from first product of this brand - prefer emoji, then valid URL
         const firstImage = product.images?.[0]
         const imageUrl = getImageUrl(firstImage)
         image = product.emoji || imageUrl || '📦'
@@ -238,7 +209,6 @@ function SubcategorySidebar({
         const imageUrl = getImageUrl(firstImage)
         image = product.emoji || imageUrl || '📦'
       } else {
-        // Default to subcategory field, then productType
         key = product.subcategory || product.productType || 'Unknown'
         name = product.subcategory || product.productType || 'Unknown'
         const firstImage = product.images?.[0]
@@ -257,11 +227,9 @@ function SubcategorySidebar({
       subcategoryMap.get(key).count++
     })
     
-    // Convert to array and sort by count (most products first)
     const subcategoryList = Array.from(subcategoryMap.values())
       .sort((a, b) => b.count - a.count)
     
-    // Add "All" option at the beginning
     subcategoryList.unshift({
       key: 'all',
       name: 'All',
@@ -272,7 +240,6 @@ function SubcategorySidebar({
     setSubcategories(subcategoryList)
   }, [products, type, backendSubcategories, categories])
 
-  // Scroll selected subcategory into view
   useEffect(() => {
     if (selectedRef.current && scrollContainerRef.current) {
       const container = scrollContainerRef.current
@@ -285,7 +252,6 @@ function SubcategorySidebar({
       const containerHeight = container.clientHeight
       const selectedHeight = selected.clientHeight
       
-      // Center the selected item
       const targetScroll = selectedTop - (containerHeight / 2) + (selectedHeight / 2)
       
       container.scrollTo({
@@ -313,8 +279,8 @@ function SubcategorySidebar({
         top: '0px',
         bottom: '0px',
         height: '100vh',
-        paddingTop: '110px', // Account for mobile header height (search bar + nav links)
-        paddingBottom: '80px', // Account for filter/sort buttons at bottom
+        paddingTop: '110px', 
+        paddingBottom: '80px', 
         scrollbarWidth: 'none',
         msOverflowStyle: 'none'
       }}

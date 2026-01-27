@@ -11,18 +11,14 @@ import FilterPanel from '@/components/category/FilterPanel'
 import SortPanel from '@/components/category/SortPanel'
 import SubcategorySidebar from '@/components/shop/SubcategorySidebar'
 import { motion, AnimatePresence } from 'framer-motion'
-import { shopAPI } from '@/utils/api'
+import { productAPI } from '@/utils/api'
 import { saveShopContext } from '@/utils/routePersistence'
 
 const BATCH_SIZE = 6
 
 export default function OffersPage() {
   const router = useRouter()
-  
-  // Save shop context when user views this shop
-  useEffect(() => {
-    saveShopContext('offers')
-  }, [])
+
   const { categories } = useCategories()
   const [products, setProducts] = useState([])
   const [skeletonCount, setSkeletonCount] = useState(BATCH_SIZE)
@@ -60,13 +56,20 @@ export default function OffersPage() {
         setSkeletonCount(BATCH_SIZE)
       }
 
-      const response = await shopAPI.getProducts('offers', {
+      const params = {
         page,
         limit: BATCH_SIZE,
-        sort: selectedSort || 'discount-high', // Default to discount-high for offers
-        minPrice: filters.priceRange[0] > 0 ? filters.priceRange[0] : undefined,
-        maxPrice: filters.priceRange[1] < 100000 ? filters.priceRange[1] : undefined,
-      })
+        sort: selectedSort || 'discount-high',
+      }
+
+      if (filters.priceRange[0] > 0) {
+        params.minPrice = filters.priceRange[0]
+      }
+      if (filters.priceRange[1] < 100000) {
+        params.maxPrice = filters.priceRange[1]
+      }
+
+      const response = await productAPI.getAll(params)
 
       if (response && response.success && response.data) {
         const newProducts = response.data || []
@@ -77,7 +80,7 @@ export default function OffersPage() {
           setProducts(prev => [...prev, ...newProducts])
         }
 
-        setSkeletonCount(prev => Math.max(0, prev - newProducts.length))
+        setSkeletonCount(0)
 
         const pagination = response.pagination || {}
         setHasMore(pagination.hasMore !== false && (pagination.pages > page || newProducts.length >= BATCH_SIZE))
@@ -96,12 +99,10 @@ export default function OffersPage() {
     }
   }, [selectedSort, filters.priceRange, isLoadingMore])
 
-  // Initial load and when filters/sort change
   useEffect(() => {
     fetchProducts(1, true)
   }, [selectedSort, filters.priceRange, filters.sizes, filters.colors, filters.brands])
 
-  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -123,10 +124,7 @@ export default function OffersPage() {
     }
   }, [hasMore, isLoadingMore, skeletonCount, currentPage, fetchProducts])
 
-  // Filter products client-side (backend already filters discount > 10%)
   const offers = useMemo(() => {
-    // Backend already filters products with discount > 10% and sorts by discount descending
-    // Calculate discount for display purposes
     let filtered = products.map((product) => {
       let discount = product.discount || 0
       if (product.originalPrice && product.price) {
@@ -140,7 +138,6 @@ export default function OffersPage() {
       return { ...product, calculatedDiscount: discount }
     })
 
-    // Apply additional discount range filter (for fine-grained filtering)
     if (filters.discountRanges && filters.discountRanges.length > 0) {
       filtered = filtered.filter((product) => {
         const discount = product.calculatedDiscount || 0
@@ -154,25 +151,23 @@ export default function OffersPage() {
       })
     }
 
-    // Apply category filter
     if (selectedCategory && selectedCategory !== 'all') {
       const selectedCategoryLower = selectedCategory.toLowerCase()
       filtered = filtered.filter(product => {
         const productCategory = product.category?.toLowerCase()
-        return productCategory === selectedCategoryLower || 
-               productCategory === selectedCategoryLower.replace(/-/g, ' ') ||
-               product.subcategory?.toLowerCase() === selectedCategoryLower ||
-               (product.subcategory && categories?.some(cat => 
-                 cat.slug === selectedCategoryLower && 
-                 cat.subcategories?.some(sub => 
-                   sub.slug === product.subcategory?.toLowerCase() ||
-                   sub.name?.toLowerCase() === product.subcategory?.toLowerCase()
-                 )
-               ))
+        return productCategory === selectedCategoryLower ||
+          productCategory === selectedCategoryLower.replace(/-/g, ' ') ||
+          product.subcategory?.toLowerCase() === selectedCategoryLower ||
+          (product.subcategory && categories?.some(cat =>
+            cat.slug === selectedCategoryLower &&
+            cat.subcategories?.some(sub =>
+              sub.slug === product.subcategory?.toLowerCase() ||
+              sub.name?.toLowerCase() === product.subcategory?.toLowerCase()
+            )
+          ))
       })
     }
 
-    // Apply size filter
     if (filters.sizes.length > 0) {
       filtered = filtered.filter((product) => {
         if (!product.sizes || product.sizes.length === 0) return false
@@ -180,7 +175,6 @@ export default function OffersPage() {
       })
     }
 
-    // Apply color filter
     if (filters.colors.length > 0) {
       filtered = filtered.filter((product) => {
         if (!product.colors || product.colors.length === 0) return false
@@ -194,7 +188,6 @@ export default function OffersPage() {
       })
     }
 
-    // Apply brand filter
     if (filters.brands && filters.brands.length > 0) {
       filtered = filtered.filter((product) => {
         const productBrand = product.brand || ''
@@ -204,7 +197,6 @@ export default function OffersPage() {
       })
     }
 
-    // Apply rating filter
     if (filters.ratings && filters.ratings.length > 0) {
       filtered = filtered.filter((product) => {
         const rating = product.rating || 0
@@ -216,7 +208,6 @@ export default function OffersPage() {
       })
     }
 
-    // Sort products
     switch (selectedSort) {
       case 'price-low':
         filtered.sort((a, b) => (a.price || 0) - (b.price || 0))
@@ -243,18 +234,17 @@ export default function OffersPage() {
     return filtered
   }, [products, selectedCategory, filters, selectedSort, categories])
 
-  // Combine products with skeletons for display
   const displayItems = useMemo(() => {
     const items = []
-    
+
     offers.forEach((product) => {
       items.push({ type: 'product', data: product })
     })
-    
+
     for (let i = 0; i < skeletonCount; i++) {
       items.push({ type: 'skeleton', key: `skeleton-${i}` })
     }
-    
+
     return items
   }, [offers, skeletonCount])
 
@@ -268,7 +258,6 @@ export default function OffersPage() {
     setIsFilterOpen(false)
   }
 
-  // Get active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0
     if (filters.discountRanges?.length > 0) count += filters.discountRanges.length
@@ -283,7 +272,6 @@ export default function OffersPage() {
   return (
     <PageWrapper>
       <div className="min-h-screen bg-gray-50 pb-20 md:pb-8 w-full overflow-x-hidden">
-        {/* Category Sidebar */}
         <SubcategorySidebar
           products={products}
           selectedSubcategory={selectedCategory}
@@ -291,14 +279,10 @@ export default function OffersPage() {
           type="category"
         />
 
-        {/* Main Content Area */}
         <div className="ml-18 mt-24 w-[calc(100%-3.5rem)] md:w-[calc(100%-5rem)] pr-2 md:pr-0">
-          {/* Page Header */}
           <div className="max-w-7xl mx-auto px-2 md:px-6 py-4 md:py-6">
-            {/* Offers Content with Progressive Loading */}
             <div className="px-1 md:px-0 py-6">
               {!isLoading && offers.length === 0 && skeletonCount === 0 ? (
-                // Empty State
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -321,7 +305,6 @@ export default function OffersPage() {
                 </motion.div>
               ) : (
                 <>
-                  {/* Results Header */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
                       <h2 className="text-xl font-bold text-gray-900">
@@ -342,7 +325,6 @@ export default function OffersPage() {
                     </p>
                   </div>
 
-                  {/* Products Grid with Progressive Loading */}
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-6 w-full items-stretch">
                     <AnimatePresence>
                       {displayItems.map((item, index) => {
@@ -368,8 +350,7 @@ export default function OffersPage() {
                       })}
                     </AnimatePresence>
                   </div>
-                  
-                  {/* Infinite scroll trigger */}
+
                   {hasMore && skeletonCount === 0 && (
                     <div ref={observerTarget} className="h-10 w-full mt-4" />
                   )}
@@ -379,7 +360,6 @@ export default function OffersPage() {
           </div>
         </div>
 
-        {/* Bottom Filter/Sort Buttons */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex md:hidden shadow-lg">
           <button
             onClick={() => setIsFilterOpen(true)}
@@ -400,7 +380,6 @@ export default function OffersPage() {
           </button>
         </div>
 
-        {/* Filter Panel */}
         <FilterPanel
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
@@ -410,7 +389,6 @@ export default function OffersPage() {
           showCategories={false}
         />
 
-        {/* Sort Panel */}
         <SortPanel
           isOpen={isSortOpen}
           onClose={() => setIsSortOpen(false)}

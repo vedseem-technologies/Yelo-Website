@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { useProducts } from '@/contexts/ProductsContext'
@@ -51,6 +51,7 @@ export default function LuxuryCategoryPage() {
   const params = useParams()
   const router = useRouter()
   const { allProducts, getShopProducts } = useProducts()
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isSortOpen, setIsSortOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState('newest')
@@ -209,6 +210,11 @@ export default function LuxuryCategoryPage() {
   const filteredProducts = useMemo(() => {
     let filtered = [...categoryProducts]
 
+    // Filter by category selection from chips
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product => product.category === selectedCategory)
+    }
+
     // Apply price range filter
     filtered = filtered.filter((product) => {
       const price = product.price || 0
@@ -244,7 +250,6 @@ export default function LuxuryCategoryPage() {
       })
     }
 
-    // Apply color filter
     if (filters.colors && filters.colors.length > 0) {
       filtered = filtered.filter((product) => {
         if (!product.colors || product.colors.length === 0) return false
@@ -258,7 +263,6 @@ export default function LuxuryCategoryPage() {
       })
     }
 
-    // Sort products
     switch (selectedSort) {
       case 'price-high':
         filtered.sort((a, b) => (b.price || 0) - (a.price || 0))
@@ -281,7 +285,7 @@ export default function LuxuryCategoryPage() {
     }
 
     return filtered
-  }, [categoryProducts, filters, selectedSort])
+  }, [categoryProducts, filters, selectedSort, selectedCategory])
 
   const handleSort = (sort) => {
     setSelectedSort(sort)
@@ -296,7 +300,6 @@ export default function LuxuryCategoryPage() {
   return (
     <PageWrapper showLoader={false}>
       <div className="min-h-screen bg-white text-gray-900">
-        {/* Header Section (Matching Luxury Page) */}
         <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-8 md:py-12">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
             <div className="flex items-center gap-4 mb-4">
@@ -307,7 +310,7 @@ export default function LuxuryCategoryPage() {
                 <ArrowLeft className="w-5 h-5 text-white" />
               </button>
               <div>
-                <h1 
+                <h1
                   className="text-3xl md:text-5xl text-white mb-2 flex items-center gap-3"
                   style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
                 >
@@ -331,7 +334,7 @@ export default function LuxuryCategoryPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60" />
           <div className="relative z-10 text-center px-4">
-            <h2 
+            <h2
               className="text-3xl md:text-5xl text-white mb-4"
               style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
             >
@@ -343,6 +346,71 @@ export default function LuxuryCategoryPage() {
           </div>
         </section>
 
+
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`flex flex-col items-center justify-center gap-1 py-3 px-2 transition-all duration-200 relative min-w-[72px] rounded-lg ${selectedCategory === 'all' ? 'bg-yellow-50 text-yellow-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              {selectedCategory === 'all' && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 rounded-r-full" />
+              )}
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl overflow-hidden transition-all duration-200 ${selectedCategory === 'all' ? 'bg-yellow-100 ring-2 ring-yellow-500' : 'bg-gray-100'
+                }`}>
+                <span>📦</span>
+              </div>
+              <span className={`text-[10px] font-medium text-center leading-tight px-1 mt-1 ${selectedCategory === 'all' ? 'text-yellow-600 font-semibold' : 'text-gray-600'
+                }`}>
+                All
+              </span>
+              {categoryProducts.length > 0 && (
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 ${selectedCategory === 'all' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                  {categoryProducts.length}
+                </span>
+              )}
+            </button>
+
+            {[...new Set(categoryProducts.map(p => p.category).filter(Boolean))].sort().map(category => {
+              const catProducts = categoryProducts.filter(p => p.category === category)
+              const count = catProducts.length
+              const emoji = catProducts[0]?.emoji || '📦'
+
+              return (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`flex flex-col items-center justify-center gap-1 py-3 px-2 transition-all duration-200 relative min-w-[72px] rounded-lg whitespace-nowrap ${selectedCategory === category ? 'bg-yellow-50 text-yellow-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  {selectedCategory === category && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 rounded-r-full" />
+                  )}
+
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl overflow-hidden transition-all duration-200 ${selectedCategory === category ? 'bg-yellow-100 ring-2 ring-yellow-500' : 'bg-gray-100'
+                    }`}>
+                    <span>{emoji}</span>
+                  </div>
+
+                  <span className={`text-[10px] font-medium text-center leading-tight px-1 mt-1 ${selectedCategory === category ? 'text-yellow-600 font-semibold' : 'text-gray-600'
+                    }`}>
+                    {category.length > 10 ? category.substring(0, 10) + '...' : category}
+                  </span>
+
+                  {count > 0 && (
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 ${selectedCategory === category ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Main Content Area */}
         <div className="max-w-7xl mx-auto px-1 py-4 md:px-6 md:py-6">
           <div className="flex gap-8">
@@ -350,7 +418,7 @@ export default function LuxuryCategoryPage() {
             <div className="hidden md:block">
               <LuxuryShopFilterPanel
                 isOpen={true}
-                onClose={() => {}}
+                onClose={() => { }}
                 filters={filters}
                 onApply={handleFilterApply}
                 resultCount={filteredProducts.length}

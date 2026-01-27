@@ -5,12 +5,10 @@ import { getApiUrl } from "./config";
 
 const apiUrl = getApiUrl();
 
-/**
- * Generic API fetch wrapper
- */
+
 async function apiFetch(endpoint, options = {}) {
   const url = `${apiUrl}${endpoint}`;
-  
+
   const config = {
     ...options,
     headers: {
@@ -19,7 +17,6 @@ async function apiFetch(endpoint, options = {}) {
     },
   };
 
-  // Add auth token if available
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("yelo_token");
     if (token) {
@@ -29,8 +26,7 @@ async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, config);
-    
-    // Check if response has content before parsing JSON
+
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
@@ -49,9 +45,7 @@ async function apiFetch(endpoint, options = {}) {
       throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
     }
 
-    // Handle 404 errors gracefully - return empty data instead of throwing
     if (!response.ok) {
-      // For 404 errors on product/category endpoints, return empty array
       if (response.status === 404 && (endpoint.includes('/products/category') || endpoint.includes('/shops/') && endpoint.includes('/products'))) {
         return {
           success: true,
@@ -88,58 +82,46 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-/**
- * Product API functions
- */
+
 export const productAPI = {
-  // Get all products
   getAll: async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return apiFetch(`/products${queryString ? `?${queryString}` : ""}`);
   },
 
-  // Get product by slug (supports vendor-slug/product-slug format)
   getBySlug: async (slug) => {
     return apiFetch(`/products/${slug}`);
   },
 
-  // Get products by shop
   getByShop: async (shopSlug, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return apiFetch(`/products/shop/${shopSlug}${queryString ? `?${queryString}` : ""}`);
   },
 
-  // Get products by vendor
   getByVendor: async (vendorSlug, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return apiFetch(`/products/vendor/${vendorSlug}${queryString ? `?${queryString}` : ""}`);
   },
 
-  // Get trending products
   getTrending: async (limit = 20) => {
     return apiFetch(`/products/trending?limit=${limit}`);
   },
 
-  // Search products
   search: async (query, params = {}) => {
     const searchParams = { ...params, search: query };
     const queryString = new URLSearchParams(searchParams).toString();
     return apiFetch(`/products${queryString ? `?${queryString}` : ""}`);
   },
 
-  // Get search suggestions (top 5 products)
   getSearchSuggestions: async (query, includeLuxury = false) => {
     return apiFetch(`/products/search/suggestions?q=${encodeURIComponent(query)}&includeLuxury=${includeLuxury}`);
   },
-
-  // Comprehensive search (products, categories, subcategories)
   comprehensiveSearch: async (query, includeLuxury = false) => {
     return apiFetch(`/products/search/comprehensive?q=${encodeURIComponent(query)}&includeLuxury=${includeLuxury}`);
   },
 
-  // Get products by category/subcategory (paginated)
   getByCategory: async (categorySlug, subcategorySlug = null, params = {}) => {
-    const queryParams = { 
+    const queryParams = {
       page: params.page || 1,
       limit: params.limit || 6,
       sort: params.sort || 'popular',
@@ -148,22 +130,18 @@ export const productAPI = {
       ...(params.minPrice && params.minPrice !== 'undefined' && { minPrice: params.minPrice }),
       ...(params.maxPrice && params.maxPrice !== 'undefined' && { maxPrice: params.maxPrice })
     };
-    
-    // Remove undefined values
+
     Object.keys(queryParams).forEach(key => {
       if (queryParams[key] === undefined || queryParams[key] === 'undefined' || queryParams[key] === '') {
         delete queryParams[key];
       }
     });
-    
+
     const queryString = new URLSearchParams(queryParams).toString();
     return apiFetch(`/products/category${queryString ? `?${queryString}` : ""}`);
   },
 };
 
-/**
- * User API functions
- */
 export const userAPI = {
   getMe: async () => {
     return apiFetch("/users/me");

@@ -18,8 +18,8 @@ import { saveShopContext } from '@/utils/routePersistence'
 
 export default function LuxuryShopPage() {
   const router = useRouter()
-  
-  // Save shop context when user views this shop
+  const [selectedCategory, setSelectedCategory] = useState('all')
+
   React.useEffect(() => {
     saveShopContext('luxury-shop')
   }, [])
@@ -46,7 +46,6 @@ export default function LuxuryShopPage() {
   const premierScrollRef = useRef(null)
   const elevatedScrollRef = useRef(null)
 
-  // Fetch luxury products from API
   React.useEffect(() => {
     const fetchLuxuryProducts = async (pageNum = 1, reset = false) => {
       try {
@@ -59,7 +58,7 @@ export default function LuxuryShopPage() {
 
         const response = await shopAPI.getProducts('luxury-shop', {
           page: pageNum,
-          limit: 50, // Fetch more products for luxury page
+          limit: 50,
           sort: selectedSort,
           minPrice: filters.priceRange[0] > 0 ? filters.priceRange[0] : undefined,
           maxPrice: filters.priceRange[1] < 100000 ? filters.priceRange[1] : undefined,
@@ -67,12 +66,12 @@ export default function LuxuryShopPage() {
 
         if (response && response.success) {
           const rawProducts = response.products || response.data || []
-          console.log(`📦 Luxury shop page: Received ${rawProducts.length} products from API (page ${pageNum})`, rawProducts.length > 0 ? `First product: ${rawProducts[0]?.name}` : 'No products')
-          
+
+
           if (reset && rawProducts.length === 0) {
-            console.warn('⚠️ No products returned from luxury-shop API on first page load')
+            console.warn(' No products returned from luxury-shop API on first page load')
           }
-          
+
           const newProducts = rawProducts.map(product => ({
             ...product,
             id: product._id || product.id,
@@ -105,14 +104,12 @@ export default function LuxuryShopPage() {
       }
     }
 
-    // Reset and fetch first page when sort/filters change
     setLuxuryProducts([])
     setPage(1)
     setHasMore(true)
     fetchLuxuryProducts(1, true)
   }, [selectedSort, filters.priceRange])
 
-  // Infinite scroll for loading more products
   React.useEffect(() => {
     if (!hasMore || isLoadingMore || isLoadingProducts) return
 
@@ -176,82 +173,88 @@ export default function LuxuryShopPage() {
     }
   }, [hasMore, isLoadingMore, isLoadingProducts, page, selectedSort, filters.priceRange])
 
-  // Get brands for Premier Weekend Access
   const premierBrands = useMemo(() => {
-    const brands = ['GUESS', 'Desigual', 'KEEN', 'Columbia', 'The North Face']
-    return brands.map(brand => {
-      const brandProducts = luxuryProducts.filter(p => 
-        p.brand?.toUpperCase().includes(brand)
-      )
+    const productsWithBrands = luxuryProducts.filter(p => p.brand && p.brand.trim() !== '')
+
+    // Get unique brands
+    const uniqueBrands = [...new Set(productsWithBrands.map(p => p.brand))]
+
+    // Create brand items with products
+    const brandItems = uniqueBrands.map(brand => {
+      const product = productsWithBrands.find(p => p.brand === brand)
+      if (!product) return null
+
       return {
         brand,
-        product: brandProducts[0] || luxuryProducts[0],
-        discount: brand === 'GUESS' ? 40 : brand === 'Desigual' ? 40 : brand === 'KEEN' ? 30 : brand === 'Columbia' ? 20 : 40,
-        extraDiscount: brand === 'GUESS' ? 10 : brand === 'Desigual' ? 20 : 0
+        product,
+        discount: Math.floor(Math.random() * 31) + 20, // Random discount 20-50%
+        extraDiscount: Math.random() > 0.7 ? 10 : 0 // 30% chance of extra discount
       }
-    }).filter(item => item.product).slice(0, 5)
+    }).filter(item => item !== null)
+
+    // Shuffle and take first 5
+    return brandItems.sort(() => Math.random() - 0.5).slice(0, 5)
   }, [luxuryProducts])
 
-  // Get brands for Endless Elevated Offers
   const elevatedBrands = useMemo(() => {
-    const brands = ['Columbia', 'The North Face', 'GUESS', 'Calvin Clein', 'Ethnic Wear']
-    return brands.map(brand => {
-      const brandProducts = luxuryProducts.filter(p => 
-        p.brand?.toUpperCase().includes(brand)
-      )
+    const productsWithBrands = luxuryProducts.filter(p => p.brand && p.brand.trim() !== '')
+
+    // Get unique brands
+    const uniqueBrands = [...new Set(productsWithBrands.map(p => p.brand))]
+
+    // Create brand items with products
+    const brandItems = uniqueBrands.map(brand => {
+      const product = productsWithBrands.find(p => p.brand === brand)
+      if (!product) return null
+
       return {
         brand,
-        product: brandProducts[0] || luxuryProducts[0],
-        discount: brand === 'Columbia' ? 20 : brand === 'The North Face' ? 40 : brand === 'GUESS' ? 30 : 25
+        product,
+        discount: Math.floor(Math.random() * 31) + 20 // Random discount 20-50%
       }
-    }).filter(item => item.product).slice(0, 5)
+    }).filter(item => item !== null)
+
+    // Shuffle and take first 5 (different from premier)
+    return brandItems.sort(() => Math.random() - 0.5).slice(0, 5)
   }, [luxuryProducts])
 
-  // Get luxury categories for "A World of Luxury" grid - only show categories with at least 1 luxury product (brand-based)
   const luxuryCategories = useMemo(() => {
-    // Ensure allCategories is an array
     const safeCategories = Array.isArray(allCategories) ? allCategories : []
-    
-    // Filter: Only show categories that have at least 1 luxury product (products with brand)
-    // luxuryProducts is already filtered to only include products with brand name
+
     const categoriesWithLuxuryProducts = safeCategories
       .map(cat => {
-        // Count only luxury products in this category (products with brand)
+
         const luxuryCategoryProducts = luxuryProducts.filter(p => {
           const hasBrand = p.brand && p.brand.trim() !== ''
           const categoryMatch = p.category?.toLowerCase() === cat.slug?.toLowerCase() ||
-                               p.category?.toLowerCase()?.includes(cat.slug?.toLowerCase()) ||
-                               cat.slug?.toLowerCase()?.includes(p.category?.toLowerCase())
+            p.category?.toLowerCase()?.includes(cat.slug?.toLowerCase()) ||
+            cat.slug?.toLowerCase()?.includes(p.category?.toLowerCase())
           return categoryMatch && hasBrand
         })
-        
-        // Only include category if it has at least 1 luxury product
+
         if (luxuryCategoryProducts.length === 0) {
           return null
         }
-        
-        // Find a product image for the category
+
         const productImage = luxuryCategoryProducts[0]?.images?.[0]?.url
         const firstImage = typeof productImage === 'string' ? productImage : productImage?.url
-        
+
         return {
           name: cat.name,
           slug: cat.slug,
           icon: cat.icon || '✨',
           image: cat.image || firstImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop',
           product: luxuryCategoryProducts[0],
-          count: luxuryCategoryProducts.length // Count only luxury products
+          count: luxuryCategoryProducts.length
         }
       })
-      .filter(cat => cat !== null) // Remove categories with no luxury products
-
-    // Add clothing category if luxury products exist for it
+      .filter(cat => cat !== null)
     const luxuryClothingProducts = luxuryProducts.filter(p => {
       const hasBrand = p.brand && p.brand.trim() !== ''
       const isClothing = ['shirts', 'dresses', 'hoodies', 'blazers', 'trousers', 'shorts', 'skirts', 'tshirts'].includes(p.category?.toLowerCase())
       return isClothing && hasBrand
     })
-    
+
     if (luxuryClothingProducts.length > 0 && !categoriesWithLuxuryProducts.find(c => c.slug === 'clothing')) {
       const clothingImage = luxuryClothingProducts[0]?.images?.[0]?.url
       const firstClothingImage = typeof clothingImage === 'string' ? clothingImage : clothingImage?.url
@@ -261,39 +264,34 @@ export default function LuxuryShopPage() {
         icon: '👔',
         image: firstClothingImage || 'https://images.unsplash.com/photo-1594938291221-94f18e0e0d7a?w=400&h=400&fit=crop',
         product: luxuryClothingProducts[0],
-        count: luxuryClothingProducts.length // Count only luxury products
+        count: luxuryClothingProducts.length
       })
     }
 
-    // Return categories that have luxury products, sorted by count (descending)
     return categoriesWithLuxuryProducts
       .filter(cat => cat.count > 0)
       .sort((a, b) => b.count - a.count)
   }, [allCategories, luxuryProducts])
 
-  // Get featured products for "Brands in Spotlight" with banners
   const spotlightBrands = useMemo(() => {
     const brands = []
-    
-    // Get unique brands from luxury products
+
     const uniqueBrands = [...new Set(luxuryProducts.map(p => p.brand).filter(Boolean))]
-    
-    // Create brand entries with banners
+
     uniqueBrands.slice(0, 4).forEach(brandName => {
       const brandProducts = luxuryProducts.filter(p => p.brand === brandName)
       if (brandProducts.length > 0) {
         brands.push({
           brand: brandName,
           product: brandProducts[0],
-          discount: Math.floor(Math.random() * 30) + 20, // Random discount 20-50%
+          discount: Math.floor(Math.random() * 30) + 20,
           type: brandProducts[0].category || 'fashion',
           image: brandProducts[0]?.images?.[0]?.url || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=800&fit=crop',
-          banner: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop' // Banner image
+          banner: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop'
         })
       }
     })
 
-    // Fallback if no brands found
     if (brands.length === 0 && luxuryProducts.length > 0) {
       return [
         {
@@ -310,31 +308,30 @@ export default function LuxuryShopPage() {
     return brands
   }, [luxuryProducts])
 
-  // Get iconic launches (fragrances)
   const iconicLaunches = useMemo(() => {
     return luxuryProducts
       .filter(p => p.category === 'fashion' || p.name?.toLowerCase().includes('fragrance') || p.name?.toLowerCase().includes('perfume'))
       .slice(0, 5)
   }, [luxuryProducts])
 
-  // Get watch list products
   const watchList = useMemo(() => {
     return luxuryProducts
       .filter(p => p.name?.toLowerCase().includes('watch') || p.category?.toLowerCase().includes('watch'))
       .slice(0, 4)
   }, [luxuryProducts])
 
-  // Filter products
   const filteredProducts = useMemo(() => {
     let filtered = [...luxuryProducts]
 
-    // Apply price range filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product => product.category === selectedCategory)
+    }
+
     filtered = filtered.filter((product) => {
       const price = product.price || 0
       return price >= filters.priceRange[0] && price <= filters.priceRange[1]
     })
 
-    // Apply brand filter
     if (filters.brands && filters.brands.length > 0) {
       filtered = filtered.filter((product) => {
         const productBrand = product.brand || ''
@@ -344,14 +341,12 @@ export default function LuxuryShopPage() {
       })
     }
 
-    // Apply category filter
     if (filters.categories && filters.categories.length > 0) {
       filtered = filtered.filter((product) => {
         return filters.categories.includes(product.category)
       })
     }
 
-    // Apply material filter
     if (filters.materials && filters.materials.length > 0) {
       filtered = filtered.filter((product) => {
         const category = product.category || ''
@@ -363,7 +358,6 @@ export default function LuxuryShopPage() {
       })
     }
 
-    // Apply color filter
     if (filters.colors && filters.colors.length > 0) {
       filtered = filtered.filter((product) => {
         if (!product.colors || product.colors.length === 0) return false
@@ -377,7 +371,6 @@ export default function LuxuryShopPage() {
       })
     }
 
-    // Sort products
     switch (selectedSort) {
       case 'price-high':
         filtered.sort((a, b) => (b.price || 0) - (a.price || 0))
@@ -400,7 +393,7 @@ export default function LuxuryShopPage() {
     }
 
     return filtered
-  }, [luxuryProducts, filters, selectedSort])
+  }, [luxuryProducts, filters, selectedSort, selectedCategory])
 
   const handleSort = (sort) => {
     setSelectedSort(sort)
@@ -425,11 +418,11 @@ export default function LuxuryShopPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
           </div>
-          
+
           <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-yellow-400" />
-              <h1 
+              <h1
                 className="text-4xl md:text-6xl lg:text-7xl text-white mb-4 leading-tight tracking-tight"
                 style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
               >
@@ -454,17 +447,17 @@ export default function LuxuryShopPage() {
               <p className="text-white/80 text-sm mb-3">Offers End In</p>
               <CountdownTimer />
             </div>
-            
+
             {/* Horizontal Scrollable Brand Offers */}
             <div className="relative">
-              <div 
+              <div
                 ref={premierScrollRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {premierBrands.map((item, index) => (
+                {premierBrands.map((item) => (
                   <LuxuryBrandOfferCard
-                    key={index}
+                    key={`premier-${item.brand}-${item.product._id || item.product.id}`}
                     product={item.product}
                     discount={item.discount}
                     extraDiscount={item.extraDiscount}
@@ -482,17 +475,17 @@ export default function LuxuryShopPage() {
               <h2 className="text-white text-2xl md:text-3xl font-bold">ENDLESS ELEVATED OFFERS</h2>
               <Sparkles className="w-5 h-5 text-yellow-400" />
             </div>
-            
+
             {/* Horizontal Scrollable Brand Offers */}
             <div className="relative">
-              <div 
+              <div
                 ref={elevatedScrollRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {elevatedBrands.map((item, index) => (
+                {elevatedBrands.map((item) => (
                   <LuxuryBrandOfferCard
-                    key={index}
+                    key={`elevated-${item.brand}-${item.product._id || item.product.id}`}
                     product={item.product}
                     discount={item.discount}
                   />
@@ -507,7 +500,7 @@ export default function LuxuryShopPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-8">
               <Sparkles className="w-5 h-5 text-yellow-600" />
-              <h2 
+              <h2
                 className="text-3xl md:text-4xl text-gray-900 font-bold text-center"
                 style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
               >
@@ -515,7 +508,7 @@ export default function LuxuryShopPage() {
               </h2>
               <Sparkles className="w-5 h-5 text-yellow-600" />
             </div>
-            
+
             {/* Banner for Brands in Spotlight */}
             <div className="mb-8 rounded-lg overflow-hidden">
               <img
@@ -572,7 +565,7 @@ export default function LuxuryShopPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-8">
               <Sparkles className="w-5 h-5 text-yellow-600" />
-              <h2 
+              <h2
                 className="text-3xl md:text-4xl text-gray-900 font-bold text-center"
                 style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
               >
@@ -581,7 +574,6 @@ export default function LuxuryShopPage() {
               <Sparkles className="w-5 h-5 text-yellow-600" />
             </div>
 
-            {/* Banner for A World of Luxury */}
             <div className="mb-8 rounded-lg overflow-hidden">
               <img
                 src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&h=400&fit=crop"
@@ -591,9 +583,74 @@ export default function LuxuryShopPage() {
               />
             </div>
 
+            <div className="mb-8 relative">
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className={`flex flex-col items-center justify-center gap-1 py-3 px-2 transition-all duration-200 relative min-w-[72px] rounded-lg ${selectedCategory === 'all' ? 'bg-yellow-50 text-yellow-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  {selectedCategory === 'all' && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 rounded-r-full" />
+                  )}
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl overflow-hidden transition-all duration-200 ${selectedCategory === 'all' ? 'bg-yellow-100 ring-2 ring-yellow-500' : 'bg-gray-100'
+                    }`}>
+                    <span>📦</span>
+                  </div>
+                  <span className={`text-[10px] font-medium text-center leading-tight px-1 mt-1 ${selectedCategory === 'all' ? 'text-yellow-600 font-semibold' : 'text-gray-600'
+                    }`}>
+                    All
+                  </span>
+                  {luxuryProducts.length > 0 && (
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 ${selectedCategory === 'all' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                      {luxuryProducts.length}
+                    </span>
+                  )}
+                </button>
+
+                {[...new Set(luxuryProducts.map(p => p.category).filter(Boolean))].sort().map(category => {
+                  const categoryProducts = luxuryProducts.filter(p => p.category === category)
+                  const count = categoryProducts.length
+                  const emoji = categoryProducts[0]?.emoji || '📦'
+
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`flex flex-col items-center justify-center gap-1 py-3 px-2 transition-all duration-200 relative min-w-[72px] rounded-lg whitespace-nowrap ${selectedCategory === category ? 'bg-yellow-50 text-yellow-600' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      {selectedCategory === category && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 rounded-r-full" />
+                      )}
+
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl overflow-hidden transition-all duration-200 ${selectedCategory === category ? 'bg-yellow-100 ring-2 ring-yellow-500' : 'bg-gray-100'
+                        }`}>
+                        <span>{emoji}</span>
+                      </div>
+
+                      <span className={`text-[10px] font-medium text-center leading-tight px-1 mt-1 ${selectedCategory === category ? 'text-yellow-600 font-semibold' : 'text-gray-600'
+                        }`}>
+                        {category.length > 10 ? category.substring(0, 10) + '...' : category}
+                      </span>
+
+                      {count > 0 && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 ${selectedCategory === category ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+
             <div className="grid grid-cols-3 gap-4 md:gap-6">
               {luxuryCategories.map((category, index) => (
-                <Link 
+                <Link
                   key={index}
                   href={`/luxury/shop/${category.slug}`}
                   className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer group block"
@@ -638,7 +695,7 @@ export default function LuxuryShopPage() {
           <section className="bg-white py-12 px-4">
             <div className="max-w-7xl mx-auto">
               <div className="mb-6">
-                <h2 
+                <h2
                   className="text-2xl md:text-3xl text-gray-900 font-bold mb-2"
                   style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
                 >
@@ -646,7 +703,7 @@ export default function LuxuryShopPage() {
                 </h2>
                 <p className="text-gray-600 text-sm md:text-base">Deck Up In New Arrivals</p>
               </div>
-              
+
               {/* Horizontal Scrollable Fragrances */}
               <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
                 {iconicLaunches.map((product, index) => (
@@ -682,13 +739,13 @@ export default function LuxuryShopPage() {
         {watchList.length > 0 && (
           <section className="bg-white py-12 px-4">
             <div className="max-w-7xl mx-auto">
-              <h2 
+              <h2
                 className="text-2xl md:text-3xl text-gray-900 font-bold mb-6"
                 style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
               >
                 THE WATCH LIST
               </h2>
-              
+
               {/* Horizontal Scrollable Watches */}
               <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
                 {watchList.map((product, index) => (
@@ -725,7 +782,7 @@ export default function LuxuryShopPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 
+                <h2
                   className="text-2xl md:text-3xl text-gray-900 font-bold mb-2"
                   style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}
                 >

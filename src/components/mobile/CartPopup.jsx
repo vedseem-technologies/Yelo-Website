@@ -19,25 +19,21 @@ function CartPopup() {
 
   const totalItems = getTotalItems()
 
-  // Get last 3 items (most recent first) - newest item appears first
   const recentItems = useMemo(() => {
-    // Get last 3 items and reverse so newest is first
     const lastThree = cartItems.slice(-3)
-    return lastThree.reverse() // Newest item at index 0
+    return lastThree.reverse() 
   }, [cartItems])
 
-  // Calculate and update popup width based on number of images
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const baseWidth = 180 // Base width for text
-      const imageWidth = 36 // Width per image including spacing
+      const baseWidth = 180 
+      const imageWidth = 36 
       const calculatedWidth = baseWidth + (recentItems.length * imageWidth)
       const maxWidth = Math.min(calculatedWidth, window.innerWidth * 0.9)
       setPopupWidth(maxWidth)
     }
   }, [recentItems.length])
 
-  // Detect when new item is added
   useEffect(() => {
     if (cartItems.length > prevCartLengthRef.current) {
       setNewItemAdded(true)
@@ -46,7 +42,6 @@ function CartPopup() {
     prevCartLengthRef.current = cartItems.length
   }, [cartItems.length])
 
-  // Get image for cart item
   const getItemImage = (item) => {
     if (item.images && item.images[0]) {
       const firstImage = item.images[0]
@@ -58,7 +53,7 @@ function CartPopup() {
     return null
   }
 
-  // Page exclusions
+
   const excludedPaths = [
     '/cart',
     '/wishlist',
@@ -70,16 +65,13 @@ function CartPopup() {
   ]
 
   const isProductDetailPage = pathname?.includes('/product/')
-  // Don't exclude /category routes - allow cart popup to show on category pages
+
   const isExcludedPage =
     excludedPaths.includes(pathname || '') || isProductDetailPage
 
-  /**
-   * Detect open filter/sort panels and modals (LoginModal, etc.)
-   */
+
   useEffect(() => {
     const checkPanels = () => {
-      // Check for filter/sort panels (z-[70] or z-70)
       const backdrops = document.querySelectorAll(
         '[class*="z-[70]"], [class*="z-70"]'
       )
@@ -92,8 +84,6 @@ function CartPopup() {
             el.classList.contains('bg-black')
         )
 
-      // Check for LoginModal or any modal overlay (z-50)
-      // Look for elements with z-50 that have backdrop blur or black overlay
       const modals = document.querySelectorAll(
         '.fixed.inset-0[class*="z-50"], .fixed.inset-0[class*="z-[50]"]'
       )
@@ -120,7 +110,6 @@ function CartPopup() {
       attributeFilter: ['class', 'style'],
     })
 
-    // Also check periodically in case MutationObserver misses something
     const interval = setInterval(checkPanels, 100)
 
     return () => {
@@ -129,9 +118,6 @@ function CartPopup() {
     }
   }, [])
 
-  /**
-   * Visibility logic
-   */
   useEffect(() => {
     const show =
       totalItems > 0 &&
@@ -165,7 +151,6 @@ function CartPopup() {
         bottom: '5.5rem',
       }}
     >
-      {/* View Cart Bar - White & Yellow Theme with Images */}
       <button
         onClick={() => router.push('/cart')}
         className="
@@ -187,12 +172,11 @@ function CartPopup() {
           maxWidth: '50%',
         }}
       >
-        {/* Product Images Preview - Last 3 items (newest first) */}
         {recentItems.length > 0 && (
           <div className="flex items-center shrink-0" style={{ gap: recentItems.length > 1 ? '-8px' : '0' }}>
             {recentItems.map((item, index) => {
               const itemImage = getItemImage(item)
-              const isNewest = index === 0 && newItemAdded // First item (index 0) is the newest
+              const isNewest = index === 0 && newItemAdded 
               
               return (
                 <div
@@ -211,7 +195,7 @@ function CartPopup() {
                     animation: isNewest
                       ? `slideInFromRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0s`
                       : `fadeIn 0.3s ease-out ${index * 0.1}s`,
-                    zIndex: recentItems.length - index, // Newest item (index 0) on top
+                    zIndex: recentItems.length - index, 
                   }}
                 >
                   {itemImage ? (
@@ -239,20 +223,16 @@ function CartPopup() {
           </div>
         )}
 
-        {/* Text Content - Stacked Vertically */}
         <div className="flex flex-col items-start shrink-0">
-          {/* View cart text - on top */}
           <span className="text-base font-semibold text-white leading-tight">
             View cart
           </span>
           
-          {/* Items count - below */}
           <span className="text-sm font-semibold text-white leading-tight mt-[3px]">
             {totalItems} {totalItems === 1 ? 'item' : 'items'}
           </span>
         </div>
         
-        {/* Right arrow icon */}
         <ChevronRight className="w-6 h-6 text-white shrink-0 ml-auto" />
       </button>
     </div>

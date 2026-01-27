@@ -9,11 +9,10 @@ import ProductDetail from '@/components/product/ProductDetail'
 export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
-  
-  // Handle catch-all route: [...slug] can be ['vendor-slug', 'product-slug'] or ['product-slug']
+
   const slugParam = params?.slug
   const slugArray = Array.isArray(slugParam) ? slugParam : [slugParam]
-  const slug = slugArray.join('/') // Join to create vendor-slug/product-slug or just product-slug
+  const slug = slugArray.join('/')
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -24,10 +23,9 @@ export default function ProductPage() {
       try {
         setLoading(true)
         setError(null)
-        
-        // Fetch from API only - no fallback to static data
+
         const response = await productAPI.getBySlug(slug)
-        
+
         if (response.success && response.data) {
           setProduct(response.data)
         } else {

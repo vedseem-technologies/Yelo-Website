@@ -146,8 +146,8 @@ const ProductDetail = ({ product }) => {
   // Fetch reviews for this product
   useEffect(() => {
     const fetchReviews = async () => {
-if (!product?._id && !product?.id) return
-      
+      if (!product?._id && !product?.id) return
+
       try {
         setLoadingReviews(true)
         const productId = product._id || product.id
@@ -161,9 +161,9 @@ if (!product?._id && !product?.id) return
         } else if (response && response.success && Array.isArray(response.data)) {
           fetchedReviews = response.data
         }
-        
+
         setReviews(fetchedReviews)
-        
+
         // Calculate and update rating from reviews
         if (fetchedReviews.length > 0) {
           const totalRating = fetchedReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
@@ -191,7 +191,7 @@ if (!product?._id && !product?.id) return
     }
 
     fetchReviews()
-    
+
     // Update local rating and review count when product changes
     if (product?.rating) {
       setLocalProductRating(product.rating)
@@ -210,7 +210,7 @@ if (!product?._id && !product?.id) return
       setSubmittingReview(true)
       const productId = product._id || product.id
       await reviewAPI.create(productId, reviewRating, reviewComment)
-      
+
       // Refresh reviews
       const response = await reviewAPI.getByProduct(productId)
       let updatedReviews = []
@@ -221,9 +221,9 @@ if (!product?._id && !product?.id) return
       } else if (response && response.success && Array.isArray(response.data)) {
         updatedReviews = response.data
       }
-      
+
       setReviews(updatedReviews)
-      
+
       // Calculate new average rating from reviews
       if (updatedReviews.length > 0) {
         const totalRating = updatedReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
@@ -231,7 +231,7 @@ if (!product?._id && !product?.id) return
         setLocalProductRating(averageRating)
         setLocalReviewCount(updatedReviews.length)
       }
-      
+
       // Reset form
       setReviewRating(5)
       setReviewComment('')
@@ -247,12 +247,12 @@ if (!product?._id && !product?.id) return
   // Get related products from the shop the user came from
   const relatedProducts = useMemo(() => {
     if (!product || !allProducts.length) return []
-    
+
     const currentProductId = product._id || product.id
-    
+
     // Get the shop slug from localStorage (which shop the user was viewing)
     const sourceShopSlug = getShopContext()
-    
+
     // If we have a source shop, filter products from that shop
     if (sourceShopSlug) {
       const shopProducts = getShopProducts(sourceShopSlug) || []
@@ -260,34 +260,34 @@ if (!product?._id && !product?.id) return
         const pId = p._id || p.id
         return pId !== currentProductId // Exclude current product
       })
-      
+
       // Ensure at least 8 products (or as many as available)
       return filtered.slice(0, Math.max(8, filtered.length))
     }
-    
+
     // Fallback: Use product's assigned shops if no source shop context
     const currentProductShops = product.assignedShops || []
-    
+
     if (currentProductShops.length > 0) {
       const filtered = allProducts.filter((p) => {
         const pId = p._id || p.id
         if (pId === currentProductId) return false
-        
+
         const pShops = p.assignedShops || []
         return pShops.some(shopSlug => currentProductShops.includes(shopSlug))
       })
-      
+
       return filtered.slice(0, Math.max(8, filtered.length))
     }
-    
+
     // Final fallback: Filter by same vendor if available, otherwise by same major category
     const vendorSlug = product.vendorSlug
     const majorCategory = (product.brand && product.brand.trim() !== '') ? 'LUXURY' : 'AFFORDABLE'
-    
+
     const filtered = allProducts.filter((p) => {
       const pId = p._id || p.id
       if (pId === currentProductId) return false
-      
+
       if (vendorSlug && p.vendorSlug === vendorSlug) return true
       if (!vendorSlug) {
         const pCategory = (p.brand && p.brand.trim() !== '') ? 'LUXURY' : 'AFFORDABLE'
@@ -295,7 +295,7 @@ if (!product?._id && !product?.id) return
       }
       return false
     })
-    
+
     return filtered.slice(0, Math.max(8, filtered.length))
   }, [product, allProducts, getShopProducts])
 
@@ -329,20 +329,20 @@ if (!product?._id && !product?.id) return
       alert('This product is currently out of stock.')
       return
     }
-    
+
     setIsAddingToCart(true)
-    
+
     // Simulate async operation with animation
     await new Promise(resolve => setTimeout(resolve, 600))
-    
+
     addToCart(product, {
       size: selectedSize || product.sizes?.[0] || 'M',
       color: selectedColor || (typeof product.colors?.[0] === 'string' ? product.colors[0] : product.colors?.[0]?.name || 'White'),
     })
-    
+
     setIsAddingToCart(false)
     setIsAddedToCart(true)
-    
+
     // Reset after 2 seconds
     setTimeout(() => {
       setIsAddedToCart(false)
@@ -367,7 +367,7 @@ if (!product?._id && !product?.id) return
       alert('This product is currently out of stock.')
       return
     }
-    
+
     // Add to cart first (silently)
     addToCart(product, {
       size: selectedSize || product.sizes?.[0] || 'M',
@@ -378,7 +378,6 @@ if (!product?._id && !product?.id) return
     router.push('/checkout')
   }
 
-  
   // Check if product is out of stock
   const isOutOfStock = product.stock === 0 || product.stock === '0'
 
@@ -435,7 +434,7 @@ if (!product?._id && !product?.id) return
       isDraggingImage.current = false
       return
     }
-    
+
     const deltaX = touchStartX.current - touchEndX.current
     const deltaY = touchStartY.current - touchEndY.current
     const minSwipeDistance = 50 // Minimum distance for a swipe
@@ -471,7 +470,7 @@ if (!product?._id && !product?.id) return
         }
       }
     }
-    
+
     // Reset touch positions
     touchStartX.current = 0
     touchStartY.current = 0
@@ -506,7 +505,7 @@ if (!product?._id && !product?.id) return
       isDraggingImage.current = false
       return
     }
-    
+
     const deltaX = touchStartX.current - touchEndX.current
     const deltaY = touchStartY.current - touchEndY.current
     const minSwipeDistance = 50
@@ -539,7 +538,7 @@ if (!product?._id && !product?.id) return
         }
       }
     }
-    
+
     touchStartX.current = 0
     touchStartY.current = 0
     touchEndX.current = 0
@@ -589,14 +588,14 @@ if (!product?._id && !product?.id) return
   // Helper function to check if a string is a URL or base64 data URL
   const isImageUrl = (str) => {
     if (!str || typeof str !== 'string') return false
-    return str.startsWith('http://') || 
-           str.startsWith('https://') || 
-           str.startsWith('/') ||
-           str.startsWith('data:image/') // Support base64 data URLs
+    return str.startsWith('http://') ||
+      str.startsWith('https://') ||
+      str.startsWith('/') ||
+      str.startsWith('data:image/') // Support base64 data URLs
   }
 
   // Get all product images (extract URLs from objects if needed)
-  const productImages = product.images && product.images.length > 0 
+  const productImages = product.images && product.images.length > 0
     ? product.images.map(img => getImageUrl(img) || product.emoji || '🛍️')
     : [product.emoji || '🛍️']
 
@@ -651,11 +650,11 @@ if (!product?._id && !product?.id) return
       e.preventDefault()
       const newX = e.clientX - dragStart.x
       const newY = e.clientY - dragStart.y
-      
+
       // Constrain position to prevent dragging too far
       const maxX = (imageZoom - 1) * 200
       const maxY = (imageZoom - 1) * 200
-      
+
       setImagePosition({
         x: Math.max(-maxX, Math.min(maxX, newX)),
         y: Math.max(-maxY, Math.min(maxY, newY))
@@ -686,9 +685,9 @@ if (!product?._id && !product?.id) return
     } else if (e.touches.length === 1 && imageZoom > 1) {
       // Single touch drag start
       setIsDragging(true)
-      setDragStart({ 
-        x: e.touches[0].clientX - imagePosition.x, 
-        y: e.touches[0].clientY - imagePosition.y 
+      setDragStart({
+        x: e.touches[0].clientX - imagePosition.x,
+        y: e.touches[0].clientY - imagePosition.y
       })
     }
   }
@@ -701,7 +700,7 @@ if (!product?._id && !product?.id) return
       const scale = distance / pinchStartDistance.current
       const newZoom = Math.max(1, Math.min(3, pinchStartZoom.current * scale))
       setImageZoom(newZoom)
-      
+
       // Reset position when zooming
       if (newZoom === 1) {
         setImagePosition({ x: 0, y: 0 })
@@ -711,11 +710,11 @@ if (!product?._id && !product?.id) return
       e.preventDefault()
       const newX = e.touches[0].clientX - dragStart.x
       const newY = e.touches[0].clientY - dragStart.y
-      
+
       // Constrain position to prevent dragging too far
       const maxX = (imageZoom - 1) * 200
       const maxY = (imageZoom - 1) * 200
-      
+
       setImagePosition({
         x: Math.max(-maxX, Math.min(maxX, newX)),
         y: Math.max(-maxY, Math.min(maxY, newY))
@@ -755,14 +754,13 @@ if (!product?._id && !product?.id) return
               suppressHydrationWarning
             >
               <Heart
-                className={`w-5 h-5 ${
-                  isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-800'
-                }`}
+                className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-800'
+                  }`}
               />
             </button>
-            <button 
+            <button
               onClick={handleShare}
-              className="p-2.5 bg-white/90 backdrop-blur-md hover:bg-white rounded-full shadow-lg transition-all hover:scale-110 focus:outline-none active:scale-95" 
+              className="p-2.5 bg-white/90 backdrop-blur-md hover:bg-white rounded-full shadow-lg transition-all hover:scale-110 focus:outline-none active:scale-95"
               suppressHydrationWarning
               title="Share product"
             >
@@ -772,7 +770,7 @@ if (!product?._id && !product?.id) return
         </div>
 
         {/* Image Container - 65vh Height */}
-        <div 
+        <div
           ref={imageContainerRef}
           className="h-[65vh] flex items-center justify-center overflow-hidden touch-pan-y cursor-grab active:cursor-grabbing relative"
           onTouchStart={handleImageTouchStart}
@@ -794,7 +792,7 @@ if (!product?._id && !product?.id) return
             {productImages.map((image, index) => {
               const offset = index - selectedImageIndex
               const isActive = index === selectedImageIndex
-              
+
               return (
                 <motion.div
                   key={index}
@@ -846,11 +844,10 @@ if (!product?._id && !product?.id) return
                     e.stopPropagation()
                     goToImage(index)
                   }}
-                  className={`rounded-full transition-all duration-300 focus:outline-none ${
-                    index === selectedImageIndex
+                  className={`rounded-full transition-all duration-300 focus:outline-none ${index === selectedImageIndex
                       ? 'bg-yellow-500 w-8 h-2 shadow-md shadow-yellow-200'
                       : 'bg-white/60 hover:bg-white/80 w-2 h-2'
-                  }`}
+                    }`}
                   suppressHydrationWarning
                   aria-label={`Go to image ${index + 1}`}
                 />
@@ -868,7 +865,7 @@ if (!product?._id && !product?.id) return
           {product.brand && (
             <p className="text-base font-medium text-gray-600 mb-3">{product.brand}</p>
           )}
-          
+
           {/* Rating and Reviews */}
           {(localProductRating !== null && localProductRating > 0) || localReviewCount > 0 ? (
             <div className="flex items-center gap-2 mb-4">
@@ -915,18 +912,17 @@ if (!product?._id && !product?.id) return
                 </p>
                 <div className="flex gap-3 flex-wrap">
                   {product.colors.map((color, index) => {
-                    const colorObj = typeof color === 'string' 
-                      ? { name: color, value: color, image: product.emoji } 
+                    const colorObj = typeof color === 'string'
+                      ? { name: color, value: color, image: product.emoji }
                       : color
                     return (
                       <button
                         key={index}
                         onClick={() => setSelectedColor(colorObj.name)}
-                        className={`w-14 h-14 rounded-xl border-2 transition-all overflow-hidden shadow-sm focus:outline-none active:scale-95 ${
-                          selectedColor === colorObj.name
+                        className={`w-14 h-14 rounded-xl border-2 transition-all overflow-hidden shadow-sm focus:outline-none active:scale-95 ${selectedColor === colorObj.name
                             ? 'border-yellow-500 border-3 scale-110 shadow-lg shadow-yellow-200 ring-2 ring-yellow-100'
                             : 'border-gray-200 hover:border-yellow-300'
-                        }`}
+                          }`}
                         style={{ backgroundColor: colorObj.value }}
                         title={colorObj.name}
                         suppressHydrationWarning
@@ -961,15 +957,13 @@ if (!product?._id && !product?.id) return
                   key={size}
                   onClick={() => handleSizeSelect(size)}
                   disabled={size === 'XXL' && product.stock < 5}
-                  className={`py-3 rounded-lg border-2 font-semibold text-sm transition-all focus:outline-none ${
-                    selectedSize === size
+                  className={`py-3 rounded-lg border-2 font-semibold text-sm transition-all focus:outline-none ${selectedSize === size
                       ? 'border-yellow-500 bg-yellow-500 text-white shadow-md shadow-yellow-200'
                       : 'border-gray-200 text-gray-700 hover:border-yellow-300 hover:bg-yellow-50'
-                  } ${
-                    size === 'XXL' && product.stock < 5
+                    } ${size === 'XXL' && product.stock < 5
                       ? 'opacity-50 cursor-not-allowed'
                       : ''
-                  }`}
+                    }`}
                   suppressHydrationWarning
                 >
                   {size}
@@ -1049,15 +1043,15 @@ if (!product?._id && !product?.id) return
               <span className="w-1 h-4 bg-yellow-500 rounded-full"></span>
               Ratings & Reviews
             </h3>
-            <button 
+            <button
               onClick={() => setShowReviewForm(!showReviewForm)}
-              className="text-yellow-700 hover:text-yellow-800 text-xs font-semibold px-4 py-2 border-2 border-yellow-300 rounded-lg transition-colors hover:bg-yellow-50 focus:outline-none shadow-sm" 
+              className="text-yellow-700 hover:text-yellow-800 text-xs font-semibold px-4 py-2 border-2 border-yellow-300 rounded-lg transition-colors hover:bg-yellow-50 focus:outline-none shadow-sm"
               suppressHydrationWarning
             >
               {showReviewForm ? 'Cancel' : 'Write Review'}
             </button>
           </div>
-          
+
           {/* Review Form */}
           {showReviewForm && (
             <div className="mb-6 p-5 bg-yellow-50/50 rounded-xl border-2 border-yellow-200">
@@ -1065,7 +1059,7 @@ if (!product?._id && !product?.id) return
                 <span className="w-1 h-4 bg-yellow-500 rounded-full"></span>
                 Write Your Review
               </h4>
-              
+
               {/* Rating Selection */}
               <div className="mb-4">
                 <label className="text-xs font-medium text-gray-700 mb-2 block uppercase tracking-wide">Rating</label>
@@ -1082,7 +1076,7 @@ if (!product?._id && !product?.id) return
                   ))}
                 </div>
               </div>
-              
+
               {/* Comment Input */}
               <div className="mb-4">
                 <label className="text-xs font-medium text-gray-700 mb-2 block uppercase tracking-wide">Your Review</label>
@@ -1094,7 +1088,7 @@ if (!product?._id && !product?.id) return
                   rows={4}
                 />
               </div>
-              
+
               {/* Submit Button */}
               <button
                 onClick={handleSubmitReview}
@@ -1105,7 +1099,7 @@ if (!product?._id && !product?.id) return
               </button>
             </div>
           )}
-          
+
           {/* Rating Summary */}
           {(localProductRating !== null && localProductRating > 0) || localReviewCount > 0 ? (
             <div className="mb-6">
@@ -1121,7 +1115,7 @@ if (!product?._id && !product?.id) return
               )}
             </div>
           ) : null}
-          
+
           {/* Reviews List */}
           <div className="pt-5">
             {loadingReviews ? (
@@ -1213,14 +1207,13 @@ if (!product?._id && !product?.id) return
 
       {/* Bottom Action Buttons */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t-2 border-yellow-200 px-4 py-2 z-40 flex gap-3 shadow-lg">
-        <motion.button 
+        <motion.button
           onClick={handleAddToCart}
           disabled={isAddingToCart || isAddedToCart || isOutOfStock}
-          className={`flex-1 px-4 py-2.5 border-2 font-bold rounded-xl transition-colors relative overflow-hidden disabled:opacity-75 disabled:cursor-not-allowed focus:outline-none shadow-sm text-sm ${
-            isOutOfStock 
-              ? 'border-gray-300 text-gray-500 bg-gray-100' 
+          className={`flex-1 px-4 py-2.5 border-2 font-bold rounded-xl transition-colors relative overflow-hidden disabled:opacity-75 disabled:cursor-not-allowed focus:outline-none shadow-sm text-sm ${isOutOfStock
+              ? 'border-gray-300 text-gray-500 bg-gray-100'
               : 'border-yellow-500 text-yellow-600 hover:bg-yellow-50'
-          }`}
+            }`}
           suppressHydrationWarning
           whileTap={!isOutOfStock ? { scale: 0.98 } : {}}
           animate={isAddedToCart ? { scale: [1, 1.05, 1] } : {}}
@@ -1264,7 +1257,7 @@ if (!product?._id && !product?.id) return
               </motion.span>
             )}
           </AnimatePresence>
-          
+
           {/* Ripple effect */}
           {isAddedToCart && (
             <motion.div
@@ -1275,14 +1268,13 @@ if (!product?._id && !product?.id) return
             />
           )}
         </motion.button>
-        <motion.button 
+        <motion.button
           onClick={handleBuyNow}
           disabled={isOutOfStock}
-          className={`flex-1 py-2.5 px-4 font-bold rounded-xl transition-all focus:outline-none shadow-md text-sm ${
-            isOutOfStock
+          className={`flex-1 py-2.5 px-4 font-bold rounded-xl transition-all focus:outline-none shadow-md text-sm ${isOutOfStock
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
               : 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white hover:shadow-lg'
-          }`}
+            }`}
           suppressHydrationWarning
           whileTap={!isOutOfStock ? { scale: 0.98 } : {}}
         >
@@ -1400,11 +1392,10 @@ if (!product?._id && !product?.id) return
                   <button
                     key={index}
                     onClick={(e) => { e.stopPropagation(); setModalImageIndex(index); setImageZoom(1); setImagePosition({ x: 0, y: 0 }); }}
-                    className={`h-2 rounded-full transition-all focus:outline-none ${
-                      index === modalImageIndex
+                    className={`h-2 rounded-full transition-all focus:outline-none ${index === modalImageIndex
                         ? 'bg-yellow-500 w-6'
                         : 'bg-white/60 hover:bg-white/80 w-2'
-                    }`}
+                      }`}
                     suppressHydrationWarning
                   />
                 ))}
