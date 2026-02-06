@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/LoginModal";
+import LoginModal_mail from "../LoginModal_mail";
 
 export default function AuthGate() {
   const { backendUser, isLoginModalOpen, closeLoginModal } = useAuth();
@@ -12,7 +13,7 @@ export default function AuthGate() {
   if (backendUser && !isLoginModalOpen) return null;
 
   return (
-    <LoginModal
+    <LoginModal_mail
       isOpen={isLoginModalOpen}
       setIsOpen={closeLoginModal}
     />
